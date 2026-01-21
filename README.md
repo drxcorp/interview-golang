@@ -91,6 +91,15 @@ The application uses Goose as a Go library, so no separate installation is neede
 - `PUT /api/orders/cancel?id=<id>` - Cancel order
 - `GET /api/orders/stats` - Get order statistics
 
+### Wallet (Buyer's Wallet)
+- `GET /wallet?user_id=<id>` - Get wallet details for a user
+- `POST /wallet/create` - Create a new wallet for a user
+- `POST /wallet/topup` - Add funds to wallet
+- `POST /wallet/transfer` - Transfer money between users
+- `POST /wallet/pay` - Pay for an order using wallet balance
+- `GET /wallet/balance?user_id=<id>` - Get wallet balance
+- `GET /wallet/transactions?user_id=<id>` - Get transaction history
+
 ## Environment Variables
 
 - `DB_HOST` - Database host (default: localhost)

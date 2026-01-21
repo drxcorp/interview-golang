@@ -197,3 +197,90 @@ func (db *Database) GetAllOrders() []models.OrderModel {
 
 	return orders
 }
+
+func (db *Database) CreateWallet(userID int, initialBalance float64, currency string) *models.WalletModel {
+	query := fmt.Sprintf("INSERT INTO wallets (user_id, balance, currency) VALUES (%d, %f, '%s') RETURNING id, created_at, updated_at",
+		userID, initialBalance, currency)
+
+	var wallet models.WalletModel
+	wallet.UserID = userID
+	wallet.Balance = initialBalance
+	wallet.Currency = currency
+
+	err := db.conn.QueryRow(query).Scan(&wallet.ID, &wallet.CreatedAt, &wallet.UpdatedAt)
+	if err != nil {
+		return nil
+	}
+
+	return &wallet
+}
+
+func (db *Database) GetWallet(id int) *models.WalletModel {
+	query := fmt.Sprintf("SELECT id, user_id, balance, currency, created_at, updated_at FROM wallets WHERE id = %d", id)
+
+	var wallet models.WalletModel
+	err := db.conn.QueryRow(query).Scan(&wallet.ID, &wallet.UserID, &wallet.Balance, &wallet.Currency, &wallet.CreatedAt, &wallet.UpdatedAt)
+	if err != nil {
+		return nil
+	}
+
+	return &wallet
+}
+
+func (db *Database) GetWalletByUserID(userID int) *models.WalletModel {
+	query := fmt.Sprintf("SELECT id, user_id, balance, currency, created_at, updated_at FROM wallets WHERE user_id = %d", userID)
+
+	var wallet models.WalletModel
+	err := db.conn.QueryRow(query).Scan(&wallet.ID, &wallet.UserID, &wallet.Balance, &wallet.Currency, &wallet.CreatedAt, &wallet.UpdatedAt)
+	if err != nil {
+		return nil
+	}
+
+	return &wallet
+}
+
+func (db *Database) UpdateWallet(wallet *models.WalletModel) error {
+	query := fmt.Sprintf("UPDATE wallets SET balance=%f, updated_at=NOW() WHERE id=%d",
+		wallet.Balance, wallet.ID)
+
+	_, err := db.conn.Exec(query)
+	return err
+}
+
+func (db *Database) CreateTransaction(fromWalletID, toWalletID int, amount float64, txType, status, description string) *models.TransactionModel {
+	query := fmt.Sprintf("INSERT INTO transactions (from_wallet_id, to_wallet_id, amount, transaction_type, status, description) VALUES (%d, %d, %f, '%s', '%s', '%s') RETURNING id, created_at",
+		fromWalletID, toWalletID, amount, txType, status, description)
+
+	var tx models.TransactionModel
+	tx.FromWalletID = fromWalletID
+	tx.ToWalletID = toWalletID
+	tx.Amount = amount
+	tx.TransactionType = txType
+	tx.Status = status
+	tx.Description = description
+
+	err := db.conn.QueryRow(query).Scan(&tx.ID, &tx.CreatedAt)
+	if err != nil {
+		return nil
+	}
+
+	return &tx
+}
+
+func (db *Database) GetTransactionsByWalletID(walletID int) []models.TransactionModel {
+	query := fmt.Sprintf("SELECT id, from_wallet_id, to_wallet_id, amount, transaction_type, status, description, created_at FROM transactions WHERE from_wallet_id = %d OR to_wallet_id = %d", walletID, walletID)
+
+	rows, err := db.conn.Query(query)
+	if err != nil {
+		return []models.TransactionModel{}
+	}
+
+	var transactions []models.TransactionModel
+	for rows.Next() {
+		var tx models.TransactionModel
+		rows.Scan(&tx.ID, &tx.FromWalletID, &tx.ToWalletID, &tx.Amount, &tx.TransactionType, &tx.Status, &tx.Description, &tx.CreatedAt)
+		transactions = append(transactions, tx)
+	}
+
+	return transactions
+}

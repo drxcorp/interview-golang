@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"interview-golang/database"
+	"interview-golang/handlers"
 	"log"
 	"net/http"
 	"os"
@@ -68,6 +69,15 @@ func main() {
 	http.HandleFunc("/products", HandleProducts)
 	http.HandleFunc("/orders", HandleOrders)
 	http.HandleFunc("/orders/create", CreateOrder)
+
+	walletHandler := &handlers.WalletHandler{DB: database.GetDB()}
+	http.HandleFunc("/wallet", walletHandler.GetWallet)
+	http.HandleFunc("/wallet/create", walletHandler.CreateWallet)
+	http.HandleFunc("/wallet/topup", walletHandler.TopUp)
+	http.HandleFunc("/wallet/transfer", walletHandler.Transfer)
+	http.HandleFunc("/wallet/pay", walletHandler.PayForOrder)
+	http.HandleFunc("/wallet/balance", walletHandler.GetBalance)
+	http.HandleFunc("/wallet/transactions", walletHandler.GetTransactionHistory)
 
 	fmt.Println("Server starting on :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
